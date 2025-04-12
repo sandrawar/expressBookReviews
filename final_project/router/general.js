@@ -1,5 +1,6 @@
 const express = require('express');
 let books = require("./booksdb.js");
+const axios = require("axios");
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
@@ -11,7 +12,7 @@ public_users.post("/register", (req,res) => {
     // Check if both username and password are provided
     if (username && password) {
         // Check if the user does not already exist
-        if (!doesExist(username)) {
+        if (!isValid(username)) {
             // Add the new user to the users array
             users.push({"username": username, "password": password});
             return res.status(200).json({message: "User successfully registered. Now you can login"});
@@ -22,20 +23,6 @@ public_users.post("/register", (req,res) => {
     // Return error if username or password is missing
     return res.status(404).json({message: "Unable to register user."});
 });
-
-// Check if a user with the given username already exists
-const doesExist = (username) => {
-    // Filter the users array for any user with the same username
-    let userswithsamename = users.filter((user) => {
-        return user.username === username;
-    });
-    // Return true if any user with the same username is found, otherwise false
-    if (userswithsamename.length > 0) {
-        return true;
-    } else {
-        return false;
-    }
-}
 
 // Get the book list available in the shop
 public_users.get('/',function (req, res) {
@@ -88,5 +75,44 @@ public_users.get('/review/:isbn',function (req, res) {
     const isbn = req.params.isbn;
     res.send(books[isbn].reviews);
 });
+
+const getBooksUsingAsyncAwait = async () => {
+    try {
+      const response = await axios.get("/");
+      console.log("List of Books (Async/Await):", response.data);
+    } catch (error) {
+      console.error("Error fetching books:", error.message);
+    }
+  };
+
+  const getBookByIsbnUsingAsyncAwait = async (isbn) => {
+    try {
+      const response = await axios.get('/isbn/${isbn}');
+      console.log(`Book Details for ISBN ${isbn} (Async/Await):`, response.data);
+    } catch (error) {
+      console.error(`Error fetching book with ISBN ${isbn}:`, error.message);
+    }
+  };
+
+  const getBooksByAuthorUsingPromise = (author) => {
+    axios.get(`/author/${author}`)
+      .then(response => {
+        console.log(`Books by ${author} (Promise):`, response.data);
+      })
+      .catch(error => {
+        console.error(`Error fetching books by author ${author}:`, error.message);
+      });
+  };
+
+  const getBooksByTitleUsingPromise = (title) => {
+    axios.get(`/title/${title}`)
+      .then(response => {
+        console.log(`Books with title "${title}" (Promise):`, response.data);
+      })
+      .catch(error => {
+        console.error(`Error fetching books with title ${title}:`, error.message);
+      });
+  };
+  
 
 module.exports.general = public_users;
